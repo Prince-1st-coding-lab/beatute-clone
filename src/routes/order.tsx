@@ -1,8 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { ArrowLeft, Check, Copy, Minus, Plus, ShieldCheck } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { ArrowLeft, Check, Copy, Loader2, Minus, Plus, ShieldCheck } from "lucide-react";
 
-import { catalog, formatRwf, WHATSAPP_NUMBER, WHATSAPP_URL } from "@/lib/catalog";
+import {
+  DELIVERY_FEE,
+  formatRwf,
+  productsQueryOptions,
+  WHATSAPP_NUMBER,
+  WHATSAPP_URL,
+} from "@/lib/catalog";
+import { placeOrder } from "@/lib/orders.functions";
 
 export const Route = createFileRoute("/order")({
   head: () => ({
@@ -34,7 +43,6 @@ function WhatsAppIcon({ className }: { className?: string }) {
   );
 }
 
-const DELIVERY_FEE = 2000;
 const MOMO_NUMBER = "+250 796 604 901";
 const MOMO_NAME = "BEAUTECOSMETICS RWANDA";
 
@@ -58,6 +66,9 @@ const inputClass =
 const labelClass = "mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground";
 
 function OrderPage() {
+  const { data: catalog = [], isLoading } = useQuery(productsQueryOptions);
+  const submitOrder = useServerFn(placeOrder);
+
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -65,25 +76,23 @@ function OrderPage() {
   const [address, setAddress] = useState("");
   const [notes, setNotes] = useState("");
   const [payment, setPayment] = useState<PaymentId>("momo");
-  const [confirmed, setConfirmed] = useState(false);
+  const [orderRef, setOrderRef] = useState("");
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
+
+  const confirmed = orderRef !== "";
 
   const selected = useMemo(
     () =>
       catalog
         .map((item) => ({ item, qty: quantities[item.id] ?? 0 }))
         .filter((line) => line.qty > 0),
-    [quantities],
+    [catalog, quantities],
   );
 
   const subtotal = selected.reduce((sum, l) => sum + l.item.price * l.qty, 0);
   const total = subtotal > 0 ? subtotal + DELIVERY_FEE : 0;
-
-  const orderRef = useMemo(
-    () => `BC-${Math.random().toString(36).slice(2, 7).toUpperCase()}`,
-    [],
-  );
 
   const setQty = (id: string, delta: number) =>
     setQuantities((q) => ({ ...q, [id]: Math.max(0, (q[id] ?? 0) + delta) }));
@@ -113,13 +122,31 @@ function OrderPage() {
 
   const whatsappHref = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(whatsappMessage)}`;
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (selected.length === 0) return setError("Please choose at least one product.");
     if (name.trim().length < 2) return setError("Please enter your full name.");
     if (phone.replace(/\D/g, "").length < 9) return setError("Please enter a valid phone number.");
     if (address.trim().length < 3) return setError("Please enter your delivery address.");
     setError("");
-    setConfirmed(true);
+    setSaving(true);
+    try {
+      const result = await submitOrder({
+        data: {
+          customer_name: name.trim(),
+          phone: phone.trim(),
+          district: district.trim(),
+          address: address.trim(),
+          notes: notes.trim(),
+          payment_method: payment,
+          items: selected.map((l) => ({ product_id: l.item.id, quantity: l.qty })),
+        },
+      });
+      setOrderRef(result.reference);
+    } catch {
+      setError("We could not save your order. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const copyMomo = async () => {
@@ -155,6 +182,7 @@ function OrderPage() {
             <p className="mb-4 text-xs text-muted-foreground">
               Tap + to add items. Delivery in Kigali is {formatRwf(DELIVERY_FEE)}.
             </p>
+            {isLoading && <Loader2 className="size-5 animate-spin text-primary" />}
             <div className="flex flex-col gap-3">
               {catalog.map((item) => {
                 const qty = quantities[item.id] ?? 0;
@@ -166,8 +194,8 @@ function OrderPage() {
                     }`}
                   >
                     <img
-                      src={item.image}
-                      alt={item.alt}
+                      src={item.image_url}
+                      alt={item.image_alt || item.name}
                       width={512}
                       height={512}
                       loading="lazy"
@@ -309,8 +337,10 @@ function OrderPage() {
             <button
               type="button"
               onClick={handleConfirm}
-              className="w-full rounded-full bg-primary px-6 py-4 text-sm font-bold uppercase tracking-wide text-primary-foreground transition-transform active:scale-[0.98]"
+              disabled={saving}
+              className="flex w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-4 text-sm font-bold uppercase tracking-wide text-primary-foreground transition-transform active:scale-[0.98] disabled:opacity-60"
             >
+              {saving && <Loader2 className="size-4 animate-spin" />}
               Confirm order · {formatRwf(total)}
             </button>
           </div>
@@ -411,7 +441,7 @@ function OrderPage() {
 
           <button
             type="button"
-            onClick={() => setConfirmed(false)}
+            onClick={() => setOrderRef("")}
             className="w-full text-center text-xs font-semibold text-muted-foreground underline"
           >
             Edit my order

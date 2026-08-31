@@ -1,17 +1,39 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { MapPin, Phone, Plus, Search, ShoppingBag } from "lucide-react";
 
 import heroImage from "@/assets/hero-skincare.jpg";
 import categorySkincare from "@/assets/category-skincare.jpg";
 import categoryMakeup from "@/assets/category-makeup.jpg";
-import productCerave from "@/assets/product-cerave.jpg";
-import productLrp from "@/assets/product-lrp.jpg";
+import { formatRwf, productsQueryOptions } from "@/lib/catalog";
 
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "Beautècosmetics Rwanda — Authentic Skincare in Kigali" },
+      {
+        name: "description",
+        content:
+          "Shop 100% authentic skincare and beauty products in Kigali. Fast delivery, wholesale prices and easy WhatsApp ordering with MoMo or PayU.",
+      },
+      {
+        property: "og:title",
+        content: "Beautècosmetics Rwanda — Authentic Skincare in Kigali",
+      },
+      {
+        property: "og:description",
+        content:
+          "Authentic global beauty brands delivered across Kigali. Order on WhatsApp and pay with MoMo or PayU.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   component: Index,
 });
 
 const WHATSAPP_URL = "https://wa.me/250796604901";
+
 
 function WhatsAppIcon({ className }: { className?: string }) {
   return (
@@ -43,29 +65,11 @@ const categories = [
   },
 ];
 
-const products = [
-  {
-    image: productCerave,
-    alt: "CeraVe Daily Moisturizing Lotion pump bottle",
-    brand: "CeraVe",
-    brandColor: "text-blue-600",
-    name: "Daily Moisturizing Lotion (236ml)",
-    detail: "For Dry to Very Dry Skin",
-    price: "18,500 RWF",
-  },
-  {
-    image: productLrp,
-    alt: "La Roche-Posay Anthelios SPF 50+ sunscreen tube",
-    brand: "La Roche-Posay",
-    brandColor: "text-orange-600",
-    name: "Anthelios Invisible Fluid SPF 50+",
-    detail: "High Protection UVA/UVB",
-    price: "24,000 RWF",
-  },
-];
-
 function Index() {
+  const { data: products = [] } = useQuery(productsQueryOptions);
+
   return (
+
     <div className="mx-auto min-h-screen max-w-3xl bg-background font-sans text-foreground">
       {/* Top Bar */}
       <nav className="sticky top-0 z-50 flex items-center justify-between border-b border-secondary bg-background/80 px-4 py-3 backdrop-blur-md">
@@ -172,12 +176,12 @@ function Index() {
         <div className="flex flex-col gap-6 px-4">
           {products.map((product) => (
             <div
-              key={product.name}
+              key={product.id}
               className="flex gap-4 rounded-2xl border border-border bg-card p-3 shadow-sm"
             >
               <img
-                src={product.image}
-                alt={product.alt}
+                src={product.image_url}
+                alt={product.image_alt || product.name}
                 width={512}
                 height={512}
                 loading="lazy"
@@ -185,16 +189,15 @@ function Index() {
               />
               <div className="flex flex-1 flex-col justify-between py-1">
                 <div>
-                  <span
-                    className={`text-[10px] font-bold uppercase tracking-tighter ${product.brandColor}`}
-                  >
+                  <span className="text-[10px] font-bold uppercase tracking-tighter text-primary">
                     {product.brand}
                   </span>
                   <h3 className="text-sm font-semibold leading-snug">{product.name}</h3>
-                  <p className="mt-1 text-xs text-muted-foreground">{product.detail}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{product.description}</p>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-bold">{product.price}</span>
+                  <span className="text-sm font-bold">{formatRwf(product.price)}</span>
+
                   <Link
                     to="/order"
                     aria-label={`Order ${product.name}`}

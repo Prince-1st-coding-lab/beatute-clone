@@ -1,53 +1,36 @@
-import productCerave from "@/assets/product-cerave.jpg";
-import productLrp from "@/assets/product-lrp.jpg";
-import categorySkincare from "@/assets/category-skincare.jpg";
-import categoryMakeup from "@/assets/category-makeup.jpg";
+import { queryOptions } from "@tanstack/react-query";
 
-export type CatalogItem = {
+import { supabase } from "@/integrations/supabase/client";
+
+export type Product = {
   id: string;
-  image: string;
-  alt: string;
   brand: string;
   name: string;
+  description: string;
   price: number;
+  image_url: string;
+  image_alt: string;
+  is_active: boolean;
+  sort_order: number;
 };
-
-export const catalog: CatalogItem[] = [
-  {
-    id: "cerave-lotion",
-    image: productCerave,
-    alt: "CeraVe Daily Moisturizing Lotion pump bottle",
-    brand: "CeraVe",
-    name: "Daily Moisturizing Lotion (236ml)",
-    price: 18500,
-  },
-  {
-    id: "lrp-anthelios",
-    image: productLrp,
-    alt: "La Roche-Posay Anthelios SPF 50+ sunscreen tube",
-    brand: "La Roche-Posay",
-    name: "Anthelios Invisible Fluid SPF 50+",
-    price: 24000,
-  },
-  {
-    id: "skincare-set",
-    image: categorySkincare,
-    alt: "Creamy white face cream texture",
-    brand: "Beautè Select",
-    name: "Glow Skincare Starter Set",
-    price: 32000,
-  },
-  {
-    id: "face-lips",
-    image: categoryMakeup,
-    alt: "Liquid foundation on a soft pink background",
-    brand: "Beautè Select",
-    name: "Face & Lips Essentials Kit",
-    price: 27500,
-  },
-];
 
 export const WHATSAPP_NUMBER = "250796604901";
 export const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}`;
+export const DELIVERY_FEE = 2000;
 
 export const formatRwf = (value: number) => `${value.toLocaleString("en-US")} RWF`;
+
+export async function fetchActiveProducts(): Promise<Product[]> {
+  const { data, error } = await supabase
+    .from("products")
+    .select("id, brand, name, description, price, image_url, image_alt, is_active, sort_order")
+    .eq("is_active", true)
+    .order("sort_order", { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as Product[];
+}
+
+export const productsQueryOptions = queryOptions({
+  queryKey: ["products", "active"],
+  queryFn: fetchActiveProducts,
+});
