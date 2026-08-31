@@ -1,17 +1,39 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { MapPin, Phone, Plus, Search, ShoppingBag } from "lucide-react";
 
 import heroImage from "@/assets/hero-skincare.jpg";
 import categorySkincare from "@/assets/category-skincare.jpg";
 import categoryMakeup from "@/assets/category-makeup.jpg";
-import productCerave from "@/assets/product-cerave.jpg";
-import productLrp from "@/assets/product-lrp.jpg";
+import { formatRwf, productsQueryOptions } from "@/lib/catalog";
 
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "Beautècosmetics Rwanda — Authentic Skincare in Kigali" },
+      {
+        name: "description",
+        content:
+          "Shop 100% authentic skincare and beauty products in Kigali. Fast delivery, wholesale prices and easy WhatsApp ordering with MoMo or PayU.",
+      },
+      {
+        property: "og:title",
+        content: "Beautècosmetics Rwanda — Authentic Skincare in Kigali",
+      },
+      {
+        property: "og:description",
+        content:
+          "Authentic global beauty brands delivered across Kigali. Order on WhatsApp and pay with MoMo or PayU.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   component: Index,
 });
 
 const WHATSAPP_URL = "https://wa.me/250796604901";
+
 
 function WhatsAppIcon({ className }: { className?: string }) {
   return (
