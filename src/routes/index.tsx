@@ -176,12 +176,12 @@ function Index() {
         <div className="flex flex-col gap-6 px-4">
           {products.map((product) => (
             <div
-              key={product.name}
+              key={product.id}
               className="flex gap-4 rounded-2xl border border-border bg-card p-3 shadow-sm"
             >
               <img
-                src={product.image}
-                alt={product.alt}
+                src={product.image_url}
+                alt={product.image_alt || product.name}
                 width={512}
                 height={512}
                 loading="lazy"
@@ -189,16 +189,15 @@ function Index() {
               />
               <div className="flex flex-1 flex-col justify-between py-1">
                 <div>
-                  <span
-                    className={`text-[10px] font-bold uppercase tracking-tighter ${product.brandColor}`}
-                  >
+                  <span className="text-[10px] font-bold uppercase tracking-tighter text-primary">
                     {product.brand}
                   </span>
                   <h3 className="text-sm font-semibold leading-snug">{product.name}</h3>
-                  <p className="mt-1 text-xs text-muted-foreground">{product.detail}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{product.description}</p>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-bold">{product.price}</span>
+                  <span className="text-sm font-bold">{formatRwf(product.price)}</span>
+
                   <Link
                     to="/order"
                     aria-label={`Order ${product.name}`}
