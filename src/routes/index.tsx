@@ -65,29 +65,11 @@ const categories = [
   },
 ];
 
-const products = [
-  {
-    image: productCerave,
-    alt: "CeraVe Daily Moisturizing Lotion pump bottle",
-    brand: "CeraVe",
-    brandColor: "text-blue-600",
-    name: "Daily Moisturizing Lotion (236ml)",
-    detail: "For Dry to Very Dry Skin",
-    price: "18,500 RWF",
-  },
-  {
-    image: productLrp,
-    alt: "La Roche-Posay Anthelios SPF 50+ sunscreen tube",
-    brand: "La Roche-Posay",
-    brandColor: "text-orange-600",
-    name: "Anthelios Invisible Fluid SPF 50+",
-    detail: "High Protection UVA/UVB",
-    price: "24,000 RWF",
-  },
-];
-
 function Index() {
+  const { data: products = [] } = useQuery(productsQueryOptions);
+
   return (
+
     <div className="mx-auto min-h-screen max-w-3xl bg-background font-sans text-foreground">
       {/* Top Bar */}
       <nav className="sticky top-0 z-50 flex items-center justify-between border-b border-secondary bg-background/80 px-4 py-3 backdrop-blur-md">
